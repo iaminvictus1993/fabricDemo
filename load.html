@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <title>画水管</title>
+  </head>
+  <body>
+    <canvas
+      width="800"
+      height="500"
+      id="c1"
+      style="border: 1px solid black"
+    ></canvas>
+    <br />
+    <script src="https://cdn.bootcss.com/fabric.js/3.2.0/fabric.js"></script>
+    <script>
+      var $ = function(id) {
+        return document.getElementById(id);
+      };
+      var canvas = new fabric.Canvas("c1");
+      // 保存
+      function laod() {
+        canvas.loadFromJSON(
+          localStorage.getItem("jstr"),
+          canvas.renderAll.bind(canvas),
+          function(o, object) {
+            object.selectable = false;
+          }
+        );
+      }
+      laod();
+    </script>
+  </body>
+</html>

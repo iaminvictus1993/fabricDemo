@@ -1,0 +1,127 @@
+<html>
+  <head>
+    <title>画水管</title>
+  </head>
+  <body>
+    <canvas
+      width="800"
+      height="500"
+      id="c1"
+      style="border: 1px solid black"
+    ></canvas>
+    <br />
+    <button id="zws">直瓦斯管</button>
+    <button id="wws">瓦斯管转角</button>
+    <button id="waterMeter">水表</button>
+    <button id="a">透明背景图片</button>
+    <button id="c">发动机设备</button>
+    <button id="p">文字参数指标</button>
+    <button id="save">保存</button>
+    <a href="./load.html" target="_blank">前往详情页</a>
+    <script src="https://cdn.bootcss.com/fabric.js/3.2.0/fabric.js"></script>
+    <script>
+      var $ = function(id) {
+        return document.getElementById(id);
+      };
+      var canvas = new fabric.Canvas("c1");
+      canvas.on("mouse:down", function(options) {
+        if (options.target) {
+          // 监控页面的键盘事件
+          document.onkeydown = function(e) {
+            // 是否点击delete键
+            if (e.keyCode === 46) {
+              // 移除当前所选对象
+              canvas.remove(options.target);
+            }
+            if (e.keyCode === 13 && options.target.type === "text") {
+              var a = prompt("请设置参数key");
+              options.target.set("text", a);
+              canvas.renderAll();
+            }
+          };
+        }
+      });
+      var context = canvas.getContext();
+      //画瓦斯管
+      function renderwws() {
+        canvas.add(
+          new fabric.Rect({
+            left: 100,
+            top: 100,
+            fill: "gray",
+            width: 50,
+            height: 50,
+            clipTo: function(ctx) {
+              ctx.beginPath();
+              ctx.moveTo(-25, 25);
+              ctx.arc(-25, 25, 50, 0, Math.PI * 1.5, true);
+            }
+          })
+        );
+      }
+      //画瓦斯管
+      function renderzws() {
+        canvas.add(
+          new fabric.Rect({
+            left: 0,
+            top: 0,
+            fill: "gray",
+            width: 300,
+            height: 50
+          })
+        );
+      }
+      // 画水表
+      function renderWaterMeter() {
+        fabric.Image.fromURL("./waterMeter.png", function(img) {
+          img.scale(0.5).set({
+            left: 200,
+            top: 100
+          });
+          canvas.add(img);
+        });
+      }
+      // 画透明背景图片
+      function rendera() {
+        fabric.Image.fromURL("./a.png", function(img) {
+          img.scale(0.5).set({
+            left: 300,
+            top: 100
+          });
+          canvas.add(img);
+        });
+      }
+      // 画发动机
+      function renderc() {
+        fabric.Image.fromURL("./c.png", function(img) {
+          img.scale(0.5).set({
+            left: 400,
+            top: 100
+          });
+          canvas.add(img);
+        });
+      }
+      // 写文字
+      function renderTxt() {
+        var text = new fabric.Text("参数设置", {
+          left: 100,
+          top: 100,
+          textBackgroundColor: "rgb(221, 221, 221)"
+        });
+        canvas.add(text);
+      }
+      // 保存
+      function save() {
+        var jstr = JSON.stringify(canvas.toJSON())
+        localStorage.setItem('jstr',jstr)
+      }
+      $("wws").onclick = renderwws;
+      $("zws").onclick = renderzws;
+      $("waterMeter").onclick = renderWaterMeter;
+      $("a").onclick = rendera;
+      $("c").onclick = renderc;
+      $("p").onclick = renderTxt;
+      $("save").onclick = save;
+    </script>
+  </body>
+</html>
