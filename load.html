@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>画水管</title>
+    <title>查看</title>
   </head>
   <body>
     <canvas
@@ -15,14 +15,16 @@
       var $ = function(id) {
         return document.getElementById(id);
       };
-      var canvas = new fabric.Canvas("c1");
-      // 保存
+      var canvas = new fabric.StaticCanvas("c1");
       function laod() {
         canvas.loadFromJSON(
           localStorage.getItem("jstr"),
           canvas.renderAll.bind(canvas),
           function(o, object) {
             object.selectable = false;
+            if(o['$KEY']) {
+              object.text = o['$KEY'];
+            }
           }
         );
       }

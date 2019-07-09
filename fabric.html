@@ -1,8 +1,18 @@
 <html>
   <head>
     <title>画水管</title>
+    <style>
+      #k {
+        display: none;
+      }
+    </style>
   </head>
   <body>
+    <select id="k" onchange="handleChange(event)">
+      <option value="瓦斯浓度:0.0%">瓦斯浓度</option>
+      <option value="瓦斯压力:0.0kPa">瓦斯压力</option>
+      <option value="末端: 0.0℃">末端</option>
+    </select>
     <canvas
       width="800"
       height="500"
@@ -23,7 +33,22 @@
       var $ = function(id) {
         return document.getElementById(id);
       };
+      var selectVal = "无";
+      var fabricObj = null;
       var canvas = new fabric.Canvas("c1");
+      function handleChange(e) {
+        $("k").style.display = "none";
+        selectVal = e.target.value;
+        fabricObj.toObject = (function(toObject) {
+          return function() {
+            return fabric.util.object.extend(toObject.call(this), {
+              $KEY: selectVal
+            });
+          };
+        })(fabricObj.toObject);
+        fabricObj.set("text", selectVal.split(":")[0]);
+        canvas.renderAll();
+      }
       canvas.on("mouse:down", function(options) {
         if (options.target) {
           // 监控页面的键盘事件
@@ -34,42 +59,136 @@
               canvas.remove(options.target);
             }
             if (e.keyCode === 13 && options.target.type === "text") {
-              var a = prompt("请设置参数key");
-              options.target.set("text", a);
-              canvas.renderAll();
+              $("k").style.display = "block";
+              fabricObj = options.target;
+              // options.target.toObject = (function(toObject) {
+              //   return function() {
+              //     return fabric.util.object.extend(toObject.call(this), {
+              //       $KEY: selectVal
+              //     });
+              //   };
+              // })(options.target.toObject);
+              // options.target.set("text", selectVal.split(":")[0]);
+              // canvas.renderAll();
             }
           };
         }
       });
-      var context = canvas.getContext();
+
+      // 对象放大不能放大到canvas外面
+      canvas.on("object:modified", function(e) {
+        //在对象修改时方法里就可以调用了。
+        let obj = e.target;
+
+        let boundingRect = obj.getBoundingRect(true);
+        if (
+          boundingRect.left < 0 ||
+          boundingRect.top < 0 ||
+          boundingRect.left + boundingRect.width > obj.canvas.getWidth() ||
+          boundingRect.top + boundingRect.height > obj.canvas.getHeight()
+        ) {
+          obj.top = obj._stateProperties.top;
+          obj.left = obj._stateProperties.left;
+          obj.angle = obj._stateProperties.angle;
+          obj.scaleX = obj._stateProperties.scaleX;
+          obj.scaleY = obj._stateProperties.scaleY;
+          obj.setCoords();
+          obj.saveState();
+        } else {
+          obj.saveState();
+        }
+      });
+      // 移动对象不能移出canvas外
+      canvas.on("object:moving", function(e) {
+        var obj = e.target;
+        // if object is too big ignore
+        if (
+          obj.currentHeight > obj.canvas.height ||
+          obj.currentWidth > obj.canvas.width
+        ) {
+          return;
+        }
+        obj.setCoords();
+        // top-left  corner
+        if (obj.getBoundingRect().top < 0 || obj.getBoundingRect().left < 0) {
+          obj.top = Math.max(obj.top, obj.top - obj.getBoundingRect().top);
+          obj.left = Math.max(obj.left, obj.left - obj.getBoundingRect().left);
+        }
+        // bot-right corner
+        if (
+          obj.getBoundingRect().top + obj.getBoundingRect().height >
+            obj.canvas.height ||
+          obj.getBoundingRect().left + obj.getBoundingRect().width >
+            obj.canvas.width
+        ) {
+          obj.top = Math.min(
+            obj.top,
+            obj.canvas.height -
+              obj.getBoundingRect().height +
+              obj.top -
+              obj.getBoundingRect().top
+          );
+          obj.left = Math.min(
+            obj.left,
+            obj.canvas.width -
+              obj.getBoundingRect().width +
+              obj.left -
+              obj.getBoundingRect().left
+          );
+        }
+      });
       //画瓦斯管
       function renderwws() {
-        canvas.add(
-          new fabric.Rect({
-            left: 100,
-            top: 100,
-            fill: "gray",
-            width: 50,
-            height: 50,
-            clipTo: function(ctx) {
-              ctx.beginPath();
-              ctx.moveTo(-25, 25);
-              ctx.arc(-25, 25, 50, 0, Math.PI * 1.5, true);
-            }
-          })
-        );
+        var rect = new fabric.Rect({
+          left: 100,
+          top: 100,
+          fill: "gray",
+          width: 50,
+          height: 50,
+          clipTo: function(ctx) {
+            ctx.beginPath();
+            ctx.moveTo(-25, 25);
+            ctx.arc(-25, 25, 50, 0, Math.PI * 1.5, true);
+          }
+        });
+        rect.setGradient("fill", {
+          type: "radial",
+          x1: 0,
+          y1: rect.height,
+          x2: 0,
+          y2: rect.height,
+          r1: 0,
+          r2: rect.height,
+          colorStops: {
+            0: "gray",
+            0.5: "white",
+            1: "gray"
+          }
+        });
+        canvas.add(rect);
       }
       //画瓦斯管
       function renderzws() {
-        canvas.add(
-          new fabric.Rect({
-            left: 0,
-            top: 0,
-            fill: "gray",
-            width: 300,
-            height: 50
-          })
-        );
+        var rect = new fabric.Rect({
+          left: 0,
+          top: 0,
+          fill: "gray",
+          width: 300,
+          height: 50
+        });
+        rect.setGradient("fill", {
+          type: "linear",
+          x1: 0,
+          y1: 0,
+          x2: 0,
+          y2: rect.height,
+          colorStops: {
+            0: "gray",
+            0.5: "white",
+            1: "gray"
+          }
+        });
+        canvas.add(rect);
       }
       // 画水表
       function renderWaterMeter() {
@@ -112,8 +231,8 @@
       }
       // 保存
       function save() {
-        var jstr = JSON.stringify(canvas.toJSON())
-        localStorage.setItem('jstr',jstr)
+        var jstr = JSON.stringify(canvas.toJSON());
+        localStorage.setItem("jstr", jstr);
       }
       $("wws").onclick = renderwws;
       $("zws").onclick = renderzws;
